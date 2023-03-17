@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @Getter
@@ -34,15 +35,16 @@ public class CardItemRepository {
 
 
     public void deteleCartItem(int id){
-      if(CartDB.listCart.stream().filter(item->item.getId() == id).findFirst().isPresent()){
-          CartDB.listCart.remove(CartDB.listCart.stream().filter(item->item.getId() == id).findFirst().get());
-      }
-      throw new NotFoundException("Không tìm thấy Sản Phẩm Này ");
+        CartItem cartItem = CartDB.listCart.stream().filter(user->user.getId() == id).findFirst()
+                .orElseThrow(() -> {
+            throw new NotFoundException("Not found  with id = " + id);
+        });
+      CartDB.listCart.remove(cartItem);
     }
     // Tăng SP
     public void pushCount(int id) {
         CartItem cartItem = CartDB.listCart.stream().filter(item->item.getId() == id).findFirst().get();
-        if(CartDB.listCart.stream().filter(item->item.getId() == id).findFirst().isEmpty()){
+        if(!CartDB.listCart.stream().filter(item->item.getId() == id).findFirst().isPresent()){
             throw new NotFoundException("Không tìm thấy Sản Phẩm Này ");
         }
         cartItem.setCount(cartItem.getCount()+1);
@@ -50,14 +52,17 @@ public class CardItemRepository {
 
 
     public void downCount(int id) {
-        CartItem cartItem = CartDB.listCart.stream().filter(item->item.getId() == id).findFirst().get();
-        if(CartDB.listCart.stream().filter(item->item.getId() == id).findFirst().isEmpty()){
+        Optional optional = CartDB.listCart.stream().filter(item->item.getId() == id).findFirst();
+//        CartItem cartItem = CartDB.listCart.stream().filter(item->item.getId() == id).findFirst().get();
+        if(optional.isPresent()){
+            CartItem cartItem = CartDB.listCart.stream().filter(item->item.getId() == id).findFirst().get();
+            if(cartItem.getCount() == 0 ) {
+                throw new BadResquestException("K thể giảm Số Lượng SP này ");
+            }
+            cartItem.setCount(cartItem.getCount()-1);
+        }else{
             throw new NotFoundException("Không tìm thấy Sản Phẩm Này ");
         }
-        if(cartItem.getCount() == 0 ) {
-            throw new BadResquestException("K thể giảm Số Lượng SP này ");
-        }
-        cartItem.setCount(cartItem.getCount()-1);
     }
 
 
